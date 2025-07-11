@@ -10,16 +10,16 @@ function App() {
 
   // 获取名言列表
   const fetchQuotes = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const res = await axios.get('http://localhost:3001/api/quotes')
-      setQuotes(res.data)
-      setIndex(0)
+      const res = await axios.get('http://localhost:3001/api/quotes', {
+        params: { page: 1, pageSize: 20 }
+      });
+      setQuotes(res.data.quotes); // 只取 quotes 字段
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
-
+  };
   useEffect(() => {
     fetchQuotes()
     // 获取本地登录用户名
@@ -92,6 +92,13 @@ function App() {
           height: '100%',
           zIndex: 2
         }}>
+          <Link to="/list" style={{
+            color: '#3a2c1a',
+            textDecoration: 'none',
+            fontWeight: 500,
+            marginRight: 24,
+            fontSize: 18
+          }}>名言列表</Link>
           <Link to="/add" style={{
             color: '#3a2c1a',
             textDecoration: 'none',
