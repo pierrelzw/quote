@@ -3,6 +3,7 @@ import axios from 'axios'
 import html2canvas from 'html2canvas'
 import { FaShareAlt } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
+import { API_ENDPOINTS } from './config/api'
 
 export default function QuoteList() {
   const navigate = useNavigate()
@@ -16,7 +17,7 @@ export default function QuoteList() {
   const [hideShareIdx, setHideShareIdx] = useState(null)
 
   useEffect(() => {
-    axios.get('http://localhost:3001/api/quotes', {
+    axios.get(API_ENDPOINTS.QUOTES.LIST, {
       params: { page, pageSize }
     }).then(res => {
       setQuotes(res.data.quotes)

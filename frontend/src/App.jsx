@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 import { Link } from 'react-router-dom'
+import { API_ENDPOINTS } from './config/api'
 
 function App() {
   const [quotes, setQuotes] = useState([])
@@ -12,7 +13,7 @@ function App() {
   const fetchQuotes = async () => {
     setLoading(true);
     try {
-      const res = await axios.get('http://localhost:3001/api/quotes', {
+      const res = await axios.get(API_ENDPOINTS.QUOTES.LIST, {
         params: { page: 1, pageSize: 20 }
       });
       setQuotes(res.data.quotes); // 只取 quotes 字段

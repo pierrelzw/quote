@@ -1,0 +1,29 @@
+# Render 平台配置文件
+# 自动部署配置
+
+services:
+  # 后端服务
+  - type: web
+    name: quote-api
+    env: python
+    plan: free
+    buildCommand: cd backend-python && pip install -r requirements_prod.txt
+    startCommand: cd backend-python && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 30 --access-logfile - --error-logfile - app:app
+    envVars:
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: FLASK_ENV
+        value: production
+      - key: CORS_ORIGINS
+        value: https://YOUR_USERNAME.github.io
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quote-db
+          property: connectionString
+
+  # 数据库服务
+  - type: pgsql
+    name: quote-db
+    plan: free
+    databaseName: quote_db
+    user: quote_user

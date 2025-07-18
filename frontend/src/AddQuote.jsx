@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { API_ENDPOINTS } from './config/api'
 
 export default function AddQuote() {
   const [content, setContent] = useState('')
@@ -16,7 +17,7 @@ export default function AddQuote() {
       return
     }
     try {
-      await axios.post('http://localhost:3001/api/quotes', { content, author }, {
+      await axios.post(API_ENDPOINTS.QUOTES.CREATE, { content, author }, {
         headers: { Authorization: `Bearer ${token}` }
       })
       setMsg('添加成功！')

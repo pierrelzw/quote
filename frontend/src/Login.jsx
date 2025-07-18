@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { API_ENDPOINTS } from './config/api'
 
 export default function Login() {
   const [username, setUsername] = useState('')
@@ -11,7 +12,7 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('http://localhost:3001/api/auth/login', { username, password })
+      const res = await axios.post(API_ENDPOINTS.AUTH.LOGIN, { username, password })
       localStorage.setItem('token', res.data.token)
       setMsg('登录成功！')
       setTimeout(() => navigate('/'), 1000)

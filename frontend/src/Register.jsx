@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { API_ENDPOINTS } from './config/api'
 
 export default function Register() {
   const [username, setUsername] = useState('')
@@ -11,7 +12,7 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('http://localhost:3001/api/auth/register', { username, password })
+      const res = await axios.post(API_ENDPOINTS.AUTH.REGISTER, { username, password })
       setMsg('注册成功，去登录吧！')
       setTimeout(() => navigate('/login'), 1000)
     } catch (err) {
