@@ -5,26 +5,29 @@ import sqlite3
 import bcrypt
 import os
 from datetime import datetime
+from db_utils import get_db_connection, init_database
 
 app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'  # 在生产环境中应该使用环境变量
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key')
 jwt = JWTManager(app)
 
 # 启用CORS
-CORS(app)
+cors_origins = os.getenv('CORS_ORIGINS', '*').split(',')
+CORS(app, origins=cors_origins)
 
-# 数据库文件路径
-db_path = './db/quote.db'
-
-def get_db_connection():
-    """获取数据库连接"""
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row  # 使查询结果可以像字典一样访问
-    return conn
+# 初始化数据库
+try:
+    init_database()
+except Exception as e:
+    print(f"数据库初始化错误: {e}")
 
 @app.route('/')
 def index():
     return {'message': 'Quote API is running (Python Flask)!'}
+
+@app.route('/health')
+def health_check():
+    return {'status': 'healthy', 'timestamp': datetime.now().isoformat()}
 
 # 用户认证路由
 @app.route('/api/auth/register', methods=['POST'])
@@ -180,10 +183,12 @@ def add_quote():
         return jsonify({'message': '添加失败'}), 500
 
 if __name__ == '__main__':
-    # 确保数据库存在
-    if not os.path.exists(db_path):
-        from database import init_database, seed_quotes
+    # 初始化数据库
+    try:
         init_database()
-        seed_quotes()
+    except Exception as e:
+        print(f"数据库初始化错误: {e}")
     
-    app.run(debug=True, port=3001, host='0.0.0.0')
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('FLASK_ENV') != 'production'
+    app.run(host='0.0.0.0', port=port, debug=debug)

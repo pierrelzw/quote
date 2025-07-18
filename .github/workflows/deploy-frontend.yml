@@ -43,8 +43,8 @@ jobs:
         cd frontend
         npm run build
       env:
-        # 设置 API 基础URL（替换为您的 Render 后端 URL）
-        VITE_API_BASE_URL: https://your-render-backend.onrender.com
+        # 设置 API 基础URL（您的 Render 后端 URL）
+        VITE_API_BASE_URL: https://quote-u0rz.onrender.com
     
     - name: Setup Pages
       uses: actions/configure-pages@v4
