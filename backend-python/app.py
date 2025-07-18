@@ -6,7 +6,7 @@ Quote API - 统一的 Flask 应用
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
 import sqlite3
 import bcrypt
 from datetime import datetime
@@ -102,6 +102,7 @@ if IS_PRODUCTION:
 else:
     print("🔧 开发环境模式: 使用 SQLite")
     db_path = os.getenv('DATABASE_PATH', './db/quote.db')
+    app.config['DATABASE'] = db_path  # 为测试添加数据库路径配置
     
     def get_db_connection():
         # 确保数据库目录存在
@@ -266,11 +267,22 @@ def login():
         
         # 验证密码
         if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-            # 创建JWT token
+            # 创建JWT token - identity 必须是字符串
             token = create_access_token(
-                identity={'user_id': user['id'], 'username': user['username']}
+                identity=str(user['id']),
+                additional_claims={
+                    'user_id': user['id'], 
+                    'username': user['username']
+                }
             )
-            return jsonify({'token': token, 'username': user['username'], 'message': '登录成功'}), 200
+            return jsonify({
+                'token': token, 
+                'message': '登录成功',
+                'user': {
+                    'id': user['id'],
+                    'username': user['username']
+                }
+            }), 200
         else:
             return jsonify({'message': '用户名或密码错误'}), 401
             
@@ -331,7 +343,10 @@ def get_quotes():
 @app.route('/api/quotes', methods=['POST'])
 @jwt_required()
 def add_quote():
-    current_user = get_jwt_identity()
+    # 获取用户ID和JWT附加信息
+    user_id = get_jwt_identity()  # 这是字符串形式的用户ID
+    jwt_claims = get_jwt()  # 获取附加声明
+    
     data = request.get_json()
     content = data.get('content') if data.get('content') is not None else ''
     author = data.get('author') if data.get('author') is not None else ''
@@ -346,15 +361,19 @@ def add_quote():
         if IS_PRODUCTION:
             execute_query(
                 'INSERT INTO quotes (content, author, user_id) VALUES (%s, %s, %s)',
-                (content, author, current_user['user_id'])
+                (content, author, int(user_id))
             )
         else:
             execute_query(
                 'INSERT INTO quotes (content, author, user_id) VALUES (?, ?, ?)', 
-                (content, author, current_user['user_id'])
+                (content, author, int(user_id))
             )
         
-        return jsonify({'message': '添加成功'}), 201
+        return jsonify({
+            'message': '添加成功',
+            'content': content,
+            'author': author
+        }), 201
         
     except Exception as e:
         print(f"添加名言错误: {e}")
