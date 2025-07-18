@@ -29,35 +29,43 @@ def get_db_connection():
 
 def init_database():
     """初始化数据库"""
-    # 确保数据库目录存在
-    os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
-    
-    conn = get_db_connection()
-    
-    # 创建用户表
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # 创建名言表
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS quotes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text TEXT NOT NULL,
-            author TEXT NOT NULL,
-            user_id INTEGER,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (user_id) REFERENCES users (id)
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
+    try:
+        # 确保数据库目录存在
+        db_dir = os.path.dirname(DATABASE_PATH)
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+            print(f"Created database directory: {db_dir}")
+        
+        conn = get_db_connection()
+        
+        # 创建用户表
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE NOT NULL,
+                password TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # 创建名言表
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS quotes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                content TEXT NOT NULL,
+                author TEXT NOT NULL,
+                user_id INTEGER,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users (id)
+            )
+        ''')
+        
+        conn.commit()
+        conn.close()
+        print("数据库初始化完成")
+    except Exception as e:
+        print(f"数据库初始化失败: {e}")
+        raise
 
 # 初始化数据库
 try:
@@ -147,37 +155,56 @@ def login():
 # 名言相关路由
 @app.route('/api/quotes', methods=['GET'])
 def get_quotes():
-    page = request.args.get('page', 1, type=int)
-    page_size = request.args.get('pageSize', 10, type=int)
-    
-    # 验证分页参数
-    if page < 1:
-        page = 1
-    if page_size <= 0:
-        page_size = 10
-    
-    offset = (page - 1) * page_size
-    
-    conn = get_db_connection()
-    
-    # 获取总数
-    total_count = conn.execute('SELECT COUNT(*) FROM quotes').fetchone()[0]
-    
-    # 获取分页数据
-    quotes = conn.execute('''
-        SELECT quotes.id, quotes.content, quotes.author, quotes.created_at, 
-               users.username AS added_by
-        FROM quotes
-        LEFT JOIN users ON quotes.user_id = users.id
-        ORDER BY quotes.created_at DESC
-        LIMIT ? OFFSET ?
-    ''', (page_size, offset)).fetchall()
-    
-    conn.close()
-    
-    # 转换为字典格式
-    quotes_list = []
-    for quote in quotes:
+    try:
+        page = request.args.get('page', 1, type=int)
+        page_size = request.args.get('pageSize', 10, type=int)
+        
+        # 验证分页参数
+        if page < 1:
+            page = 1
+        if page_size <= 0:
+            page_size = 10
+        
+        offset = (page - 1) * page_size
+        
+        conn = get_db_connection()
+        
+        # 获取总数
+        total_count = conn.execute('SELECT COUNT(*) FROM quotes').fetchone()[0]
+        
+        # 获取分页数据
+        quotes = conn.execute('''
+            SELECT quotes.id, quotes.content, quotes.author, quotes.created_at, 
+                   users.username AS added_by
+            FROM quotes
+            LEFT JOIN users ON quotes.user_id = users.id
+            ORDER BY quotes.created_at DESC
+            LIMIT ? OFFSET ?
+        ''', (page_size, offset)).fetchall()
+        
+        conn.close()
+        
+        # 转换为字典格式
+        quotes_list = []
+        for quote in quotes:
+            quotes_list.append({
+                'id': quote['id'],
+                'content': quote['content'],
+                'author': quote['author'],
+                'added_by': quote['added_by'],
+                'created_at': quote['created_at']
+            })
+        
+        return jsonify({
+            'quotes': quotes_list,
+            'total': total_count,
+            'page': page,
+            'page_size': page_size,
+            'total_pages': (total_count + page_size - 1) // page_size
+        })
+    except Exception as e:
+        print(f"获取名言出错: {e}")
+        return jsonify({'error': '获取名言失败'}), 500
         quotes_list.append({
             'id': quote['id'],
             'content': quote['content'],
