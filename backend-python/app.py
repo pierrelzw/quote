@@ -167,12 +167,15 @@ else:
         finally:
             conn.close()
 
-# 健康检查
+# 健康检查和监控端点
 @app.route('/health')
 def health_check():
+    """基础健康检查端点 - Render平台监控用"""
     return {
         'status': 'healthy', 
         'timestamp': datetime.now().isoformat(),
+        'service': 'quote-api',
+        'version': '1.0.0',
         'environment': 'production' if IS_PRODUCTION else 'development',
         'database': 'PostgreSQL' if IS_PRODUCTION else 'SQLite'
     }
@@ -403,7 +406,130 @@ def add_quote():
         print(f"添加名言错误: {e}")
         return jsonify({'message': '添加失败，请重试'}), 500
 
-# 错误处理
+# ==================== 详细监控端点 ====================
+
+@app.route('/health/detailed', methods=['GET'])
+def detailed_health_check():
+    """详细健康检查 - 包含数据库连接状态"""
+    health_status = {
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'service': 'quote-api',
+        'version': '1.0.0',
+        'environment': 'production' if IS_PRODUCTION else 'development',
+        'checks': {}
+    }
+    
+    # 数据库连接检查
+    try:
+        if IS_PRODUCTION:
+            # PostgreSQL 连接检查
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('SELECT 1')
+            cursor.fetchone()
+            cursor.close()
+            conn.close()
+            health_status['checks']['database'] = {
+                'status': 'healthy',
+                'type': 'postgresql',
+                'message': 'Database connection successful'
+            }
+        else:
+            # SQLite 连接检查
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute('SELECT 1')
+            cursor.fetchone()
+            cursor.close()
+            conn.close()
+            health_status['checks']['database'] = {
+                'status': 'healthy',
+                'type': 'sqlite',
+                'message': 'Database connection successful'
+            }
+    except Exception as e:
+        health_status['status'] = 'unhealthy'
+        health_status['checks']['database'] = {
+            'status': 'unhealthy',
+            'message': f'Database connection failed: {str(e)}'
+        }
+    
+    # JWT配置检查
+    try:
+        jwt_secret = app.config.get('JWT_SECRET_KEY')
+        if jwt_secret and jwt_secret != 'dev_jwt_secret_key_change_in_production':
+            health_status['checks']['jwt'] = {
+                'status': 'healthy',
+                'message': 'JWT configuration is secure'
+            }
+        else:
+            health_status['checks']['jwt'] = {
+                'status': 'warning',
+                'message': 'Using default JWT secret (not secure for production)'
+            }
+    except Exception as e:
+        health_status['checks']['jwt'] = {
+            'status': 'unhealthy',
+            'message': f'JWT check failed: {str(e)}'
+        }
+    
+    # 确定整体状态
+    overall_status = 200
+    if health_status['status'] == 'unhealthy':
+        overall_status = 503
+    elif any(check.get('status') == 'warning' for check in health_status['checks'].values()):
+        overall_status = 200  # 警告不影响服务可用性
+    
+    return jsonify(health_status), overall_status
+
+@app.route('/status', methods=['GET'])
+def system_status():
+    """系统状态信息"""
+    import sys
+    import platform
+    
+    status_info = {
+        'service': 'quote-api',
+        'version': '1.0.0',
+        'timestamp': datetime.now().isoformat(),
+        'environment': {
+            'flask_env': os.getenv('FLASK_ENV', 'development'),
+            'python_version': sys.version,
+            'platform': platform.platform(),
+            'is_production': IS_PRODUCTION
+        },
+        'database': {
+            'type': 'postgresql' if IS_PRODUCTION else 'sqlite',
+            'connection_string_configured': bool(os.getenv('DATABASE_URL'))
+        },
+        'configuration': {
+            'cors_origins': os.getenv('CORS_ORIGINS', '*'),
+            'port': os.getenv('PORT', '5000'),
+            'jwt_configured': bool(os.getenv('JWT_SECRET_KEY'))
+        }
+    }
+    
+    return jsonify(status_info), 200
+
+@app.route('/version', methods=['GET'])
+def version_info():
+    """版本信息端点"""
+    import sys
+    
+    version_data = {
+        'service': 'quote-api',
+        'version': '1.0.0',
+        'python_version': sys.version.split()[0],
+        'flask_version': '3.0.0',
+        'build_date': datetime.now().isoformat(),
+        'environment': 'production' if IS_PRODUCTION else 'development'
+    }
+    
+    return jsonify(version_data), 200
+
+# ==================== 错误处理 ====================
+
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({'message': 'API 端点不存在'}), 404
