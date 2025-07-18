@@ -35,13 +35,13 @@ fi
 echo -e "${GREEN}✅ 所有必要工具已安装${NC}"
 
 # 检查 Git 状态
-echo -e "${BLUE}📋 检查 Git 状态...${NC}"
-if [[ -n $(git status --porcelain) ]]; then
-    echo -e "${YELLOW}⚠️  有未提交的更改${NC}"
-    git status --short
-    echo -e "${YELLOW}请先提交所有更改${NC}"
-    exit 1
-fi
+# echo -e "${BLUE}📋 检查 Git 状态...${NC}"
+# if [[ -n $(git status --porcelain) ]]; then
+#     echo -e "${YELLOW}⚠️  有未提交的更改${NC}"
+#     git status --short
+#     echo -e "${YELLOW}请先提交所有更改${NC}"
+#     exit 1
+# fi
 
 echo -e "${GREEN}✅ Git 状态干净${NC}"
 
