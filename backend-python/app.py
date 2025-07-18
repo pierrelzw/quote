@@ -199,7 +199,7 @@ def get_quotes():
             'quotes': quotes_list,
             'total': total_count,
             'page': page,
-            'page_size': page_size,
+            'pageSize': page_size,
             'total_pages': (total_count + page_size - 1) // page_size
         })
     except Exception as e:
