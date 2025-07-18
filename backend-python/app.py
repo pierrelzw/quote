@@ -5,7 +5,10 @@ import sqlite3
 import bcrypt
 import os
 from datetime import datetime
-from db_utils import get_db_connection, init_database
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 app = Flask(__name__)
 app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your_jwt_secret_key')
@@ -14,6 +17,47 @@ jwt = JWTManager(app)
 # 启用CORS
 cors_origins = os.getenv('CORS_ORIGINS', '*').split(',')
 CORS(app, origins=cors_origins)
+
+# 数据库配置
+DATABASE_PATH = os.getenv('DATABASE_PATH', './db/quote.db')
+
+def get_db_connection():
+    """获取数据库连接"""
+    conn = sqlite3.connect(DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_database():
+    """初始化数据库"""
+    # 确保数据库目录存在
+    os.makedirs(os.path.dirname(DATABASE_PATH), exist_ok=True)
+    
+    conn = get_db_connection()
+    
+    # 创建用户表
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # 创建名言表
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS quotes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            text TEXT NOT NULL,
+            author TEXT NOT NULL,
+            user_id INTEGER,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    
+    conn.commit()
+    conn.close()
 
 # 初始化数据库
 try:
