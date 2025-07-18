@@ -388,6 +388,14 @@ def not_found(error):
 def internal_error(error):
     return jsonify({'message': '服务器内部错误'}), 500
 
+# 在应用启动时初始化数据库（适用于生产环境）
+try:
+    init_database()
+    print("🎯 数据库初始化完成")
+except Exception as e:
+    print(f"⚠️ 数据库初始化警告: {e}")
+    # 在生产环境中不退出，允许应用启动
+
 if __name__ == '__main__':
     # 初始化数据库
     try:
