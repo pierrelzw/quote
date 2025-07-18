@@ -1,0 +1,8 @@
+# 生产环境依赖
+Flask==3.0.0
+Flask-CORS==4.0.0
+Flask-JWT-Extended==4.6.0
+bcrypt==4.1.2
+gunicorn==21.2.0
+python-dotenv==1.0.0
+psycopg2-binary==2.9.9
