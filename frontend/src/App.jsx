@@ -17,6 +17,8 @@ function App() {
         params: { page: 1, pageSize: 20 }
       });
       setQuotes(res.data.quotes); // 只取 quotes 字段
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
     } finally {
       setLoading(false);
     }

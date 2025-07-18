@@ -1,7 +1,7 @@
 // API 配置文件
 // 根据环境自动选择 API 基础 URL
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
 export const API_ENDPOINTS = {
   BASE_URL: API_BASE_URL,
