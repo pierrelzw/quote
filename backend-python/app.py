@@ -6,7 +6,7 @@ Quote API - 统一的 Flask 应用
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity, get_jwt
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
 import sqlite3
 import bcrypt
 from datetime import datetime
@@ -101,10 +101,11 @@ if IS_PRODUCTION:
             
 else:
     print("🔧 开发环境模式: 使用 SQLite")
-    db_path = os.getenv('DATABASE_PATH', './db/quote.db')
-    app.config['DATABASE'] = db_path  # 为测试添加数据库路径配置
     
     def get_db_connection():
+        # 优先使用Flask配置中的DATABASE路径（测试时使用）
+        db_path = app.config.get('DATABASE') or os.getenv('DATABASE_PATH', './db/quote.db')
+        
         # 确保数据库目录存在
         db_dir = os.path.dirname(db_path)
         if db_dir and not os.path.exists(db_dir):
@@ -179,7 +180,7 @@ def health_check():
 @app.route('/')
 def index():
     return {
-        'message': 'Quote API is running (Python Flask)!',
+        'message': 'Python Flask Quote API is running!',
         'version': '2.0.0',
         'environment': 'production' if IS_PRODUCTION else 'development'
     }
@@ -188,11 +189,18 @@ def index():
 @app.route('/api/auth/register', methods=['POST'])
 def register():
     data = request.get_json()
-    username = data.get('username') if data.get('username') is not None else ''
-    password = data.get('password') if data.get('password') is not None else ''
+    username = data.get('username') or ''
+    password = data.get('password') or ''
     
-    username = username.strip() if isinstance(username, str) else ''
-    password = password.strip() if isinstance(password, str) else ''
+    if isinstance(username, str):
+        username = username.strip()
+    else:
+        username = ''
+        
+    if isinstance(password, str):
+        password = password.strip()
+    else:
+        password = ''
     
     if not username or not password:
         return jsonify({'message': '用户名和密码不能为空'}), 400
@@ -238,11 +246,18 @@ def register():
 @app.route('/api/auth/login', methods=['POST'])
 def login():
     data = request.get_json()
-    username = data.get('username') if data.get('username') is not None else ''
-    password = data.get('password') if data.get('password') is not None else ''
+    username = data.get('username') or ''
+    password = data.get('password') or ''
     
-    username = username.strip() if isinstance(username, str) else ''
-    password = password.strip() if isinstance(password, str) else ''
+    if isinstance(username, str):
+        username = username.strip()
+    else:
+        username = ''
+        
+    if isinstance(password, str):
+        password = password.strip()
+    else:
+        password = ''
     
     if not username or not password:
         return jsonify({'message': '用户名和密码不能为空'}), 400
@@ -266,20 +281,19 @@ def login():
             return jsonify({'message': '用户名或密码错误'}), 401
         
         # 验证密码
-        if bcrypt.checkpw(password.encode('utf-8'), user['password'].encode('utf-8')):
-            # 创建JWT token - identity 必须是字符串
+        stored_password = user['password']
+        if isinstance(stored_password, str):
+            stored_password = stored_password.encode('utf-8')
+        
+        if bcrypt.checkpw(password.encode('utf-8'), stored_password):
+            # 创建JWT token
             token = create_access_token(
-                identity=str(user['id']),
-                additional_claims={
-                    'user_id': user['id'], 
-                    'username': user['username']
-                }
+                identity=str(user['id'])  # JWT subject 必须是字符串
             )
             return jsonify({
-                'token': token, 
                 'message': '登录成功',
+                'token': token, 
                 'user': {
-                    'id': user['id'],
                     'username': user['username']
                 }
             }), 200
@@ -293,11 +307,17 @@ def login():
 # 名言相关路由
 @app.route('/api/quotes', methods=['GET'])
 def get_quotes():
-    page = max(int(request.args.get('page', 1)), 1)  # 确保页码至少为1
-    page_size = max(min(int(request.args.get('pageSize', 10)), 50), 1)  # 限制页面大小在1-50之间
-    offset = (page - 1) * page_size
-    
     try:
+        # 处理分页参数，确保它们是有效的正整数
+        page = max(int(request.args.get('page', 1)), 1)  # 至少为1
+        page_size = int(request.args.get('pageSize', 10))
+        
+        # 验证页面大小，防止零除错误
+        if page_size <= 0:
+            page_size = 10
+        page_size = min(page_size, 50)  # 限制最大页面大小
+        
+        offset = (page - 1) * page_size
         # 获取总数
         if IS_PRODUCTION:
             total_result = execute_query('SELECT COUNT(*) as count FROM quotes', fetch_one=True)
@@ -331,8 +351,7 @@ def get_quotes():
             'quotes': quotes_list,
             'total': total,
             'page': page,
-            'page_size': page_size,
-            'pageSize': page_size,  # 兼容旧的字段名
+            'pageSize': page_size,
             'total_pages': (total + page_size - 1) // page_size
         }), 200
         
@@ -343,16 +362,21 @@ def get_quotes():
 @app.route('/api/quotes', methods=['POST'])
 @jwt_required()
 def add_quote():
-    # 获取用户ID和JWT附加信息
-    user_id = get_jwt_identity()  # 这是字符串形式的用户ID
-    jwt_claims = get_jwt()  # 获取附加声明
-    
+    current_user_id = get_jwt_identity()  # 这现在是字符串形式的用户ID
     data = request.get_json()
-    content = data.get('content') if data.get('content') is not None else ''
-    author = data.get('author') if data.get('author') is not None else ''
     
-    content = content.strip() if isinstance(content, str) else ''
-    author = author.strip() if isinstance(author, str) else ''
+    content = data.get('content') or ''
+    author = data.get('author') or ''
+    
+    if isinstance(content, str):
+        content = content.strip()
+    else:
+        content = ''
+        
+    if isinstance(author, str):
+        author = author.strip()
+    else:
+        author = ''
     
     if not content or not author:
         return jsonify({'message': '内容和作者不能为空'}), 400
@@ -361,12 +385,12 @@ def add_quote():
         if IS_PRODUCTION:
             execute_query(
                 'INSERT INTO quotes (content, author, user_id) VALUES (%s, %s, %s)',
-                (content, author, int(user_id))
+                (content, author, int(current_user_id))
             )
         else:
             execute_query(
                 'INSERT INTO quotes (content, author, user_id) VALUES (?, ?, ?)', 
-                (content, author, int(user_id))
+                (content, author, int(current_user_id))
             )
         
         return jsonify({
@@ -387,14 +411,6 @@ def not_found(error):
 @app.errorhandler(500)
 def internal_error(error):
     return jsonify({'message': '服务器内部错误'}), 500
-
-# 在应用启动时初始化数据库（适用于生产环境）
-try:
-    init_database()
-    print("🎯 数据库初始化完成")
-except Exception as e:
-    print(f"⚠️ 数据库初始化警告: {e}")
-    # 在生产环境中不退出，允许应用启动
 
 if __name__ == '__main__':
     # 初始化数据库

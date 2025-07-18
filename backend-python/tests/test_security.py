@@ -31,10 +31,8 @@ class TestSecurity:
         assert stored_password != 'plaintext123'
         
         # 验证密码可以被正确验证
-        # 确保stored_password是bytes类型
-        if isinstance(stored_password, str):
-            stored_password = stored_password.encode('utf-8')
-        assert bcrypt.checkpw('plaintext123'.encode('utf-8'), stored_password)
+        stored_password_bytes = stored_password.encode('utf-8') if isinstance(stored_password, str) else stored_password
+        assert bcrypt.checkpw('plaintext123'.encode('utf-8'), stored_password_bytes)
         
         conn.close()
     
