@@ -1,11 +1,11 @@
-# 生产环境依赖
+# 生产环境依赖 - Python 3.12 兼容（Render部署）
 Flask==3.0.0
 Flask-CORS==4.0.0
 Flask-JWT-Extended==4.6.0
 bcrypt==4.1.2
 gunicorn==21.2.0
 python-dotenv==1.0.0
-# PostgreSQL 连接器 - 使用最新兼容版本
+# PostgreSQL 连接器 - Python 3.12 兼容版本
 psycopg2-binary>=2.9.9
-# 备用选项
+# 备用选项（如果psycopg2-binary有问题）
 # psycopg[binary]>=3.1.0

@@ -1,0 +1,17 @@
+# 测试环境专用依赖
+# 继承基础依赖，添加测试工具
+
+# 基础依赖
+-r requirements.txt
+
+# 测试框架
+pytest>=7.4.0
+pytest-flask>=1.2.0
+pytest-cov>=4.1.0
+
+# 开发工具
+black>=23.0.0
+flake8>=6.0.0
+
+# 数据库测试工具
+factory-boy>=3.3.0

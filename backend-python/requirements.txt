@@ -1,5 +1,12 @@
+# 基础依赖 - 开发和生产环境通用
 Flask==3.0.0
 Flask-CORS==4.0.0
 Flask-JWT-Extended==4.6.0
 bcrypt==4.1.2
+python-dotenv==1.0.0
+# 生产服务器（本地测试也需要）
+gunicorn==21.2.0
+# 数据库连接器
+psycopg2-binary>=2.9.9
+# 开发工具（可选）
 sqlite3-utils==3.36
