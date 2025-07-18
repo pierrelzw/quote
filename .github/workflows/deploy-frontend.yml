@@ -45,8 +45,6 @@ jobs:
       env:
         # 设置 API 基础URL（您的 Render 后端 URL）
         VITE_API_BASE_URL: https://quote-u0rz.onrender.com
-        # 设置为生产环境以确保正确的 base 路径
-        NODE_ENV: production
     
     - name: Setup Pages
       uses: actions/configure-pages@v4

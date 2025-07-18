@@ -7,7 +7,8 @@ services:
     name: quote-api
     env: python
     plan: free
-    buildCommand: cd backend-python && pip install -r requirements_prod.txt
+    region: oregon
+    buildCommand: cd backend-python && pip install --upgrade pip && pip install -r requirements_prod.txt
     startCommand: cd backend-python && gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 30 --access-logfile - --error-logfile - app:app
     envVars:
       - key: JWT_SECRET_KEY
@@ -15,7 +16,7 @@ services:
       - key: FLASK_ENV
         value: production
       - key: CORS_ORIGINS
-        value: https://YOUR_USERNAME.github.io
+        value: https://pierrelzw.github.io
       - key: DATABASE_URL
         fromDatabase:
           name: quote-db

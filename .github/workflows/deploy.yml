@@ -35,7 +35,7 @@ jobs:
           
       - name: Build
         env:
-          VITE_API_BASE_URL: https://quote-api-YOUR_RENDER_URL.onrender.com
+          VITE_API_BASE_URL: https://quote-u0rz.onrender.com
         run: |
           cd frontend
           npm run build
