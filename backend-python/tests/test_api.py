@@ -112,7 +112,7 @@ class TestAPI:
         assert 'quotes' in data
         assert 'total' in data
         assert 'page' in data
-        assert 'pageSize' in data
+        assert 'page_size' in data
         assert isinstance(data['quotes'], list)
         assert len(data['quotes']) > 0
     

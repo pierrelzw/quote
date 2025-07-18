@@ -234,13 +234,34 @@ def register():
                 'INSERT INTO users (username, password) VALUES (%s, %s)',
                 (username, hashed_password.decode('utf-8'))
             )
+            # 获取新创建用户的ID
+            user = execute_query(
+                'SELECT id FROM users WHERE username = %s', 
+                (username,), 
+                fetch_one=True
+            )
         else:
             execute_query(
                 'INSERT INTO users (username, password) VALUES (?, ?)', 
                 (username, hashed_password.decode('utf-8'))
             )
+            # 获取新创建用户的ID
+            user = execute_query(
+                'SELECT id FROM users WHERE username = ?', 
+                (username,), 
+                fetch_one=True
+            )
         
-        return jsonify({'message': '注册成功'}), 201
+        # 创建JWT token
+        token = create_access_token(identity=str(user['id']))
+        
+        return jsonify({
+            'message': '注册成功',
+            'token': token,
+            'user': {
+                'username': username
+            }
+        }), 201
         
     except Exception as e:
         print(f"注册错误: {e}")
@@ -354,7 +375,7 @@ def get_quotes():
             'quotes': quotes_list,
             'total': total,
             'page': page,
-            'pageSize': page_size,
+            'page_size': page_size,
             'total_pages': (total + page_size - 1) // page_size
         }), 200
         
