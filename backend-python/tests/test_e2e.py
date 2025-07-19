@@ -6,18 +6,12 @@ import pytest
 import json
 import time
 import threading
+import pytest
 from app import app
 
 
 class TestEndToEndWorkflows:
     """端到端工作流测试"""
-    
-    @pytest.fixture
-    def client(self):
-        """创建测试客户端"""
-        app.config['TESTING'] = True
-        with app.test_client() as client:
-            yield client
     
     def test_complete_user_journey(self, client):
         """测试完整的用户旅程"""
@@ -258,13 +252,6 @@ class TestEndToEndWorkflows:
 
 class TestDeploymentValidation:
     """部署验证测试"""
-    
-    @pytest.fixture
-    def client(self):
-        """创建测试客户端"""
-        app.config['TESTING'] = True
-        with app.test_client() as client:
-            yield client
     
     def test_deployment_readiness_check(self, client):
         """测试部署就绪性检查"""

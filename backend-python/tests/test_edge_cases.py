@@ -168,7 +168,7 @@ class TestEdgeCases:
         
         data = json.loads(response.data)
         # 应该处理零页面大小（可能使用默认值）
-        assert data['pageSize'] > 0
+        assert data['page_size'] > 0
     
     def test_malformed_auth_header(self, client):
         """测试格式错误的认证头"""

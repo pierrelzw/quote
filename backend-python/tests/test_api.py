@@ -124,7 +124,7 @@ class TestAPI:
         
         data = json.loads(response.data)
         assert data['page'] == 1
-        assert data['pageSize'] == 2
+        assert data['page_size'] == 2
         assert len(data['quotes']) <= 2
         
         # 测试第二页
@@ -133,7 +133,7 @@ class TestAPI:
         
         data = json.loads(response.data)
         assert data['page'] == 2
-        assert data['pageSize'] == 2
+        assert data['page_size'] == 2
     
     def test_add_quote_success(self, client):
         """测试添加名言成功"""
